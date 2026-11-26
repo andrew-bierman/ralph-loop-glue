@@ -44,14 +44,14 @@ Replace `SKILL_DIR` with the absolute path to the installed `ralph-loop-glue` di
 
 ### Claude Code and Codex
 
-Add the following item to the existing `hooks.Stop` array in Claude Code's `~/.claude/settings.json`. For Codex, use `~/.codex/hooks.json` and change the final argument from `claude` to `codex`. Use an absolute Node executable path if the harness can't resolve `node`.
+Add the following item to the existing `hooks.Stop` array in Claude Code's `~/.claude/settings.json`. For Codex, use `~/.codex/hooks.json` and change the final argument from `claude` to `codex`. The command uses Bun. Use an absolute Bun path if the harness cannot resolve it. Node also works if you replace `bun` with `node`.
 
 ```json
 {
   "hooks": [
     {
       "type": "command",
-      "command": "node \"SKILL_DIR/adapters/stop.mjs\" claude"
+      "command": "bun \"SKILL_DIR/adapters/stop.mjs\" claude"
     }
   ]
 }
@@ -79,4 +79,4 @@ Copy `SKILL_DIR/adapters/gemini-command.toml` to `~/.gemini/commands/ralph-loop-
 
 ## Verification status
 
-Run `node --test` to exercise the state transitions and adapter contracts. Skills CLI installation has been tested for Claude Code, Codex, OpenCode, Pi, and Gemini CLI. Automatic continuation still needs live verification in each harness, including native Codex inside Omnigent.
+Run `bun test` or `node --test` to exercise the state transitions and adapter contracts. Skills CLI installation has been tested for Claude Code, Codex, OpenCode, Pi, and Gemini CLI. Automatic continuation still needs live verification in each harness, including native Codex inside Omnigent.
