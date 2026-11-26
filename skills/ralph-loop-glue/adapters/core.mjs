@@ -4,13 +4,13 @@ import { isAbsolute, join } from 'node:path'
 
 const marker = /^\[ralph:([a-f0-9]{32}):([1-9]\d*):(retry|done|blocked)\]$/
 
-function findActiveRun(directory, session) {
+function findActiveRun(directory, session, continuing) {
   const matches = []
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     if (!entry.isFile() || !/^[a-f0-9]{32}\.json$/.test(entry.name)) continue
     try {
       const state = JSON.parse(readFileSync(join(directory, entry.name), 'utf8'))
-      if (state?.status === 'active' && state.owner === session) matches.push(entry.name.slice(0, -5))
+      if (state?.status === 'active' && state.owner === session && (continuing || state.boundAtStart === true)) matches.push(entry.name.slice(0, -5))
     } catch (error) {
       if (error.code !== 'ENOENT' && !(error instanceof SyntaxError)) throw error
     }
@@ -18,15 +18,19 @@ function findActiveRun(directory, session) {
   return matches.length === 1 ? matches[0] : undefined
 }
 
+export function sessionContext(prompt, session) {
+  if (!session || typeof prompt !== 'string' || !/\bralph[- ]loop[- ]glue\b/i.test(prompt)) return
+  return `Ralph Loop Glue session owner: ${JSON.stringify(session)}. When explicitly starting or resuming a Ralph run, save this exact owner and boundAtStart: true in the state file before doing the task.`
+}
+
 export function nextPrompt({ cwd, session, message, continuing = false }) {
   if (typeof cwd !== 'string' || !isAbsolute(cwd) || !session || typeof message !== 'string') return
   const lines = message.trimEnd().split(/\r?\n/)
   const match = marker.exec(lines.at(-1))
-  if (!match && !continuing) return
 
   const directory = join(cwd, '.ralph')
   if (!lstatSync(directory, { throwIfNoEntry: false })?.isDirectory()) return
-  const id = match?.[1] ?? findActiveRun(directory, session)
+  const id = match?.[1] ?? findActiveRun(directory, session, continuing)
   if (!id) return
   const file = join(directory, id + '.json')
   const lock = file + '.lock'
@@ -42,7 +46,7 @@ export function nextPrompt({ cwd, session, message, continuing = false }) {
     const state = JSON.parse(readFileSync(file, 'utf8'))
     if (state?.status !== 'active' || (state.owner && state.owner !== session)) return
     if (!Number.isSafeInteger(state.iteration) || state.iteration < 1) return
-    if (match ? state.iteration !== Number(match[2]) : state.owner !== session) return
+    if (match ? state.iteration !== Number(match[2]) : state.owner !== session || (!continuing && state.boundAtStart !== true)) return
     if (!Number.isSafeInteger(state.limit) || state.limit < 0) return
     if (state.limit !== 0 && state.limit < state.iteration) return
     if (typeof state.prompt !== 'string' || !state.prompt.trim()) return
