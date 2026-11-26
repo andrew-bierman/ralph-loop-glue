@@ -64,10 +64,14 @@ test('Claude, Codex, and Gemini hooks replay and honor a completion promise', (t
 
 test('Pi queues a continuation through the extension interface', (t) => {
   const { cwd, state } = fixture(t)
-  let handler
+  const handlers = new Map()
   const messages = []
-  piAdapter({ on(event, callback) { assert.equal(event, 'agent_settled'); handler = callback }, sendUserMessage(text) { messages.push(text) } })
-  handler({ messages: [{ role: 'assistant', content: [{ type: 'text', text: mark(1) }] }] }, {
+  piAdapter({ on(event, callback) { handlers.set(event, callback) }, sendUserMessage(text) { messages.push(text) } })
+  const context = handlers.get('before_agent_start')({ prompt: '/skill:ralph-loop-glue Fix the test.' }, {
+    sessionManager: { getSessionId: () => 'one' },
+  })
+  assert.match(context.message.content, /pi:one/)
+  handlers.get('agent_settled')({ messages: [{ role: 'assistant', content: [{ type: 'text', text: mark(1) }] }] }, {
     cwd, sessionManager: { getSessionId: () => 'one' },
   })
   assert.match(messages[0], /Fix the test/)
@@ -78,10 +82,17 @@ test('OpenCode queues a continuation in the same session', async (t) => {
   const { cwd, state } = fixture(t)
   let deliver
   const queued = new Promise(resolve => { deliver = resolve })
-  const stop = opencodeAdapter.setup({
+  const stop = await opencodeAdapter.setup({
     location: { directory: cwd },
     event: { async *subscribe() { yield { data: { sessionID: 'one' } } } },
     session: {
+      async hook(name, callback) {
+        assert.equal(name, 'prompt')
+        const event = { sessionID: 'one', prompt: { text: 'Load ralph-loop-glue' } }
+        callback(event)
+        assert.match(event.prompt.text, /opencode:one/)
+        return { async dispose() {} }
+      },
       async context() { return [{ type: 'assistant', finish: 'stop', content: [{ type: 'text', text: mark(1) }] }, { type: 'idle' }] },
       async prompt(input) { deliver(input) },
     },
@@ -122,4 +133,22 @@ test('an active Stop continuation can recover a missing pass marker', (t) => {
   assert.match(pass('One check still fails.', { continuing: true }), /pass 3/)
   assert.equal(pass('<promise> CHECKS\nPASS </promise>', { continuing: true }), undefined)
   assert.equal(state().status, 'done')
+})
+
+test('prompt hooks bind a loop before its first assistant response', (t) => {
+  for (const harness of ['claude', 'codex', 'gemini']) {
+    const { cwd, state } = fixture(t, { owner: harness + ':one', boundAtStart: true })
+    const run = (input) => spawnSync(process.execPath, [
+      fileURLToPath(new URL('../skills/ralph-loop-glue/adapters/stop.mjs', import.meta.url)), harness,
+    ], { input: JSON.stringify({ cwd, session_id: 'one', ...input }), encoding: 'utf8' })
+    const promptEvent = harness === 'gemini' ? 'BeforeAgent' : 'UserPromptSubmit'
+    const context = run({ hook_event_name: promptEvent, prompt: '$ralph-loop-glue Fix the test.' })
+    assert.match(JSON.parse(context.stdout).hookSpecificOutput.additionalContext, new RegExp(harness + ':one'))
+    assert.equal(run({ hook_event_name: promptEvent, prompt: 'What time is it?' }).stdout, '')
+    const finish = run(harness === 'gemini'
+      ? { hook_event_name: 'AfterAgent', prompt_response: 'Still working.' }
+      : { hook_event_name: 'Stop', last_assistant_message: 'Still working.' })
+    assert.match(JSON.parse(finish.stdout).reason, /pass 2/)
+    assert.equal(state().iteration, 2)
+  }
 })

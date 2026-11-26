@@ -1,8 +1,12 @@
-import { nextPrompt } from '../core.mjs'
+import { nextPrompt, sessionContext } from '../core.mjs'
 
 export default {
   id: 'ralph-loop-glue',
-  setup(ctx) {
+  async setup(ctx) {
+    const admission = await ctx.session.hook('prompt', event => {
+      const context = sessionContext(event.prompt.text, 'opencode:' + event.sessionID)
+      if (context) event.prompt.text += '\n\n' + context
+    })
     const controller = new AbortController()
     const events = ctx.event.subscribe({
       types: ['session.execution.succeeded'],
@@ -26,6 +30,9 @@ export default {
     })().catch(error => {
       if (!controller.signal.aborted) console.error('Ralph event subscription stopped:', error.message)
     })
-    return () => controller.abort()
+    return async () => {
+      controller.abort()
+      await admission.dispose()
+    }
   },
 }

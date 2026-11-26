@@ -50,29 +50,35 @@ function installFile(path, content) {
   write(path, content, before)
 }
 
-function addStop(harness, filename, event) {
+function addHooks(harness, filename, ...events) {
   const path = join(paths[harness], filename)
   const before = read(path)
   const config = before === undefined ? {} : JSON.parse(before)
-  const stops = (config.hooks ??= {})[event] ??= []
+  const hooks = config.hooks ??= {}
   const script = join(adapters, 'stop.mjs')
-  const sameHook = stops.some(group => group.hooks?.some(hook =>
-    typeof hook.command === 'string' && hook.command.includes(script) && hook.command.trimEnd().endsWith(' ' + harness),
-  ))
-  if (sameHook) return console.log('current ' + path)
   const command = [process.execPath, script].map(path => JSON.stringify(path)).join(' ') + ' ' + harness
-  stops.push({ hooks: [{ type: 'command', command }] })
+  let changed = false
+  for (const event of events) {
+    const groups = hooks[event] ??= []
+    const present = groups.some(group => group.hooks?.some(hook =>
+      typeof hook.command === 'string' && hook.command.includes(script) && hook.command.trimEnd().endsWith(' ' + harness),
+    ))
+    if (present) continue
+    groups.push({ hooks: [{ type: 'command', command }] })
+    changed = true
+  }
+  if (!changed) return console.log('current ' + path)
   write(path, JSON.stringify(config, null, 2) + '\n', before)
 }
 
 function configure(harness) {
   const root = paths[harness]
   switch (harness) {
-    case 'claude': return addStop(harness, 'settings.json', 'Stop')
-    case 'codex': return addStop(harness, 'hooks.json', 'Stop')
+    case 'claude': return addHooks(harness, 'settings.json', 'UserPromptSubmit', 'Stop')
+    case 'codex': return addHooks(harness, 'hooks.json', 'UserPromptSubmit', 'Stop')
     case 'gemini':
       installFile(join(root, 'commands', 'ralph-loop-glue.toml'), readFileSync(join(adapters, 'gemini-command.toml'), 'utf8'))
-      return addStop(harness, 'settings.json', 'AfterAgent')
+      return addHooks(harness, 'settings.json', 'BeforeAgent', 'AfterAgent')
     case 'pi':
       return installFile(join(root, 'extensions', 'ralph-loop-glue.ts'), 'export { default } from ' + JSON.stringify(join(adapters, 'pi.mjs')) + '\n')
     case 'opencode': {

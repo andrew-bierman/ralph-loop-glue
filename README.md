@@ -54,7 +54,7 @@ Replace `SKILL_DIR` with the absolute path to the installed `ralph-loop-glue` di
 
 ### Claude Code and Codex
 
-Add the following item to the existing `hooks.Stop` array in Claude Code's `~/.claude/settings.json`. For Codex, use `~/.codex/hooks.json` and change the final argument from `claude` to `codex`. The command uses Bun. Use an absolute Bun path if the harness cannot resolve it. Node also works if you replace `bun` with `node`.
+Add the following item to both `hooks.UserPromptSubmit` and `hooks.Stop` in Claude Code's `~/.claude/settings.json`. For Codex, use `~/.codex/hooks.json` and change the final argument from `claude` to `codex`. The command uses Bun. Use an absolute Bun path if the harness cannot resolve it. Node also works if you replace `bun` with `node`.
 
 ```json
 {
@@ -67,7 +67,7 @@ Add the following item to the existing `hooks.Stop` array in Claude Code's `~/.c
 }
 ```
 
-Approve the hook in Codex if prompted. Both adapters use the Stop event’s `last_assistant_message`. After a run is bound to a session, a Stop event already in the hook’s continuation chain can recover a missing pass marker. Remove the Stop entry to disable the adapter.
+Approve the hook in Codex if prompted. Both adapters use the Stop event’s `last_assistant_message`. After a run is bound to a session, a Stop event already in the hook’s continuation chain can recover a missing pass marker. Remove both entries to disable the adapter.
 
 ### OpenCode 2
 
@@ -85,7 +85,7 @@ Use a Pi version with the `agent_settled` extension event.
 
 ### Gemini CLI
 
-Copy `SKILL_DIR/adapters/gemini-command.toml` to `~/.gemini/commands/ralph-loop-glue.toml`. Add the same hook entry shown for Claude to the `hooks.AfterAgent` array in `~/.gemini/settings.json`, using `gemini` as the final argument. Gemini may ask you to approve skill activation or enable the hook.
+Copy `SKILL_DIR/adapters/gemini-command.toml` to `~/.gemini/commands/ralph-loop-glue.toml`. Add the same hook entry shown for Claude to both `hooks.BeforeAgent` and `hooks.AfterAgent` in `~/.gemini/settings.json`, using `gemini` as the final argument. Gemini may ask you to approve skill activation or enable the hook.
 
 ## 🧪 What’s been tested
 

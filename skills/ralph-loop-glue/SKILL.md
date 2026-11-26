@@ -16,7 +16,7 @@ On an explicit `setup` request, run `bun <absolute-skill-directory>/adapters/set
 
 Accept a task followed or preceded by `--max-iterations <n>` and `--completion-promise "<phrase>"`. A limit of zero means unlimited and is the default. If no completion promise is set, the loop continues until cancelled, capped, or blocked. Honor `--help` and `-h` before starting any work. Reject invalid options.
 
-Read `references/state.md` and create a state file. Save the task, constraints, and measurable acceptance criteria in the original prompt. Loop only on explicit user request and within the scope they granted.
+Read `references/state.md` and create a state file before working. Copy the current session owner when the adapter supplied one. Leave it unset in inline mode. Save the task, constraints, and measurable acceptance criteria in the original prompt. Loop only on explicit user request and within the scope they granted.
 
 ## Iterate
 
