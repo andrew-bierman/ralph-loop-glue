@@ -1,7 +1,7 @@
 import { nextPrompt } from '../core.mjs'
 
 export default {
-  id: 'ralph-loop',
+  id: 'ralph-loop-glue',
   setup(ctx) {
     const controller = new AbortController()
     const events = ctx.event.subscribe({

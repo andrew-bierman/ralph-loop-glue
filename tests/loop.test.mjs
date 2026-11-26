@@ -5,9 +5,9 @@ import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
-import { nextPrompt } from '../skills/ralph-loop/adapters/core.mjs'
-import piAdapter from '../skills/ralph-loop/adapters/pi.mjs'
-import opencodeAdapter from '../skills/ralph-loop/adapters/opencode/index.js'
+import { nextPrompt } from '../skills/ralph-loop-glue/adapters/core.mjs'
+import piAdapter from '../skills/ralph-loop-glue/adapters/pi.mjs'
+import opencodeAdapter from '../skills/ralph-loop-glue/adapters/opencode/index.js'
 
 const id = '1234567890abcdef1234567890abcdef'
 const mark = (iteration, result = 'retry') => `[ralph:${id}:${iteration}:${result}]`
@@ -44,7 +44,7 @@ test('Claude and Codex Stop adapters replay and honor a completion marker', (t) 
   for (const harness of ['claude', 'codex']) {
     const { cwd, state } = fixture(t)
     const stop = (message) => spawnSync(process.execPath, [
-      fileURLToPath(new URL('../skills/ralph-loop/adapters/stop.mjs', import.meta.url)), harness,
+      fileURLToPath(new URL('../skills/ralph-loop-glue/adapters/stop.mjs', import.meta.url)), harness,
     ], {
       input: JSON.stringify({ cwd, session_id: 'one', hook_event_name: 'Stop', last_assistant_message: message }),
       encoding: 'utf8',

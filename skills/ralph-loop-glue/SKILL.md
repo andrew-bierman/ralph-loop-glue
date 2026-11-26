@@ -1,9 +1,10 @@
 ---
-name: ralph-loop
+name: ralph-loop-glue
 description: "Ralph repeats a bounded implementation task against a saved prompt and explicit completion checks. Use when the user explicitly requests a Ralph loop or asks to resume or cancel one."
+license: MIT
 ---
 
-# Ralph
+# Ralph Loop Glue
 
 Complete the user's task through successive verified passes. Keep the original task and pass count on disk so another harness can resume the work. Finish when every acceptance criterion has current evidence, the user cancels, the pass limit is reached, or a blocker requires outside input.
 
