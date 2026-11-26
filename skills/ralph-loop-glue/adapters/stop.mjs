@@ -10,7 +10,8 @@ try {
     const reason = nextPrompt({
       cwd: input.cwd,
       session: harness + ':' + input.session_id,
-      message: gemini ? input.prompt_response : input.last_assistant_message,
+      message: (gemini ? input.prompt_response : input.last_assistant_message) ?? '',
+      continuing: input.stop_hook_active === true,
     })
     if (reason) console.log(JSON.stringify({ decision: gemini ? 'deny' : 'block', reason }))
   }

@@ -24,4 +24,4 @@ Reread the saved prompt and check what changed in the workspace. Use each pass t
 
 A completion promise is a claim about the work. Emit its exact `<promise>…</promise>` line immediately before the done marker only when the claim is true and all acceptance criteria have current evidence. Never emit a promise to end the loop early. Use the blocked marker if continuing requires outside input. At the limit, report any unfinished criteria.
 
-To cancel, set the run to `cancelled`. To resume a named run, follow the rebinding instructions in `references/state.md`.
+For `cancel <run-id>`, set the named run to `cancelled`. For plain `cancel`, cancel the only active run in the working directory. If several runs are active, list their IDs and ask which one to cancel. Report the pass number, or say that there is no active run. To resume a named run, follow the rebinding instructions in `references/state.md`.

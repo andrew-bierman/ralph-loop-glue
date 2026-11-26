@@ -41,12 +41,12 @@ Try a five-pass run with a clear finish line. The options match Anthropic’s pl
 ```
 
 - `--max-iterations <n>` limits the number of passes. Omit it or pass `0` for no Ralph-imposed cap. The harness may still enforce its own turn or hook limit.
-- `--completion-promise "<phrase>"` requires an exact promise marker before the run is recorded as complete. The agent still needs to verify the requested criteria. Without a promise, a loop continues until its limit, cancellation, or a blocker.
+- `--completion-promise "<phrase>"` matches the phrase in a `<promise>…</promise>` tag before marking the run complete. The agent still needs to verify the requested criteria. Without a promise, a loop continues until its limit, cancellation, or a blocker.
 - `--help` shows the options without starting a run.
 
 ### ⏸️ Interrupt, resume, or cancel
 
-Each run stores its prompt and pass count in `.ralph/<run-id>.json` in the session's working directory. Use the same skill invocation with `resume <run-id>` or `cancel <run-id>`. Use the harness's interrupt control to stop an active turn immediately. Keep the state file private and out of commits.
+Each run stores its prompt and pass count in `.ralph/<run-id>.json` in the session's working directory. Use the same skill invocation with `resume <run-id>` or `cancel`. If several runs are active, use `cancel <run-id>`. Use the harness's interrupt control to stop an active turn immediately. Keep the state file private and out of commits.
 
 ## 🔌 Wire up hooks by hand
 
@@ -67,7 +67,7 @@ Add the following item to the existing `hooks.Stop` array in Claude Code's `~/.c
 }
 ```
 
-Approve the hook in Codex if prompted. Both adapters require a Stop event with `last_assistant_message`. Remove the Stop entry to disable the adapter.
+Approve the hook in Codex if prompted. Both adapters use the Stop event’s `last_assistant_message`. After a run is bound to a session, a Stop event already in the hook’s continuation chain can recover a missing pass marker. Remove the Stop entry to disable the adapter.
 
 ### OpenCode 2
 

@@ -93,7 +93,7 @@ test('OpenCode queues a continuation in the same session', async (t) => {
   assert.equal(state().owner, 'opencode:one')
 })
 
-test('an exact optional completion promise is required before the done marker', (t) => {
+test('an exact optional completion promise is required to finish', (t) => {
   const { cwd, state } = fixture(t, { completionPromise: 'TESTS PASS' })
   const pass = message => nextPrompt({ cwd, session: 'codex:one', message })
   assert.match(pass(`<promise>tests pass</promise>\n${mark(1, 'done')}`), /<promise>TESTS PASS<\/promise>/)
@@ -110,4 +110,16 @@ test('zero keeps replaying and a done marker without a promise does not stop the
   assert.equal(state().status, 'active')
   assert.equal(pass(mark(3, 'blocked')), undefined)
   assert.equal(state().status, 'blocked')
+})
+
+test('an active Stop continuation can recover a missing pass marker', (t) => {
+  const { cwd, state } = fixture(t, { limit: 0, completionPromise: 'CHECKS PASS' })
+  const pass = (message, overrides = {}) => nextPrompt({ cwd, session: 'claude:one', message, ...overrides })
+  assert.equal(pass('No marker yet.', { continuing: true }), undefined)
+  assert.match(pass(mark(1)), /pass 2/)
+  assert.equal(pass('Someone else replied.', { continuing: true, session: 'claude:two' }), undefined)
+  assert.equal(pass('An unrelated turn.'), undefined)
+  assert.match(pass('One check still fails.', { continuing: true }), /pass 3/)
+  assert.equal(pass('<promise> CHECKS\nPASS </promise>', { continuing: true }), undefined)
+  assert.equal(state().status, 'done')
 })
