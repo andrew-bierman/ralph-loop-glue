@@ -6,7 +6,8 @@ const marker = /^\[ralph:([a-f0-9]{32}):([1-9]\d*):(retry|done|blocked)\]$/
 
 export function nextPrompt({ cwd, session, message }) {
   if (typeof cwd !== 'string' || !isAbsolute(cwd) || !session || typeof message !== 'string') return
-  const match = marker.exec(message.trimEnd().split('\n').at(-1))
+  const lines = message.trimEnd().split(/\r?\n/)
+  const match = marker.exec(lines.at(-1))
   if (!match) return
 
   const [, id, iteration, result] = match
@@ -29,8 +30,13 @@ export function nextPrompt({ cwd, session, message }) {
     if (!Number.isSafeInteger(state.limit) || state.limit < state.iteration) return
     if (typeof state.prompt !== 'string' || !state.prompt.trim()) return
 
+    const promise = state.completionPromise
+    if (promise !== undefined && (typeof promise !== 'string' || !promise.trim() || /[<>\r\n]/.test(promise))) return
+    const completionAccepted = result === 'done' && (!promise || lines.at(-2) === `<promise>${promise}</promise>`)
+
     state.owner = session
-    if (result !== 'retry') state.status = result
+    if (completionAccepted) state.status = 'done'
+    else if (result === 'blocked') state.status = 'blocked'
     else if (state.iteration === state.limit) state.status = 'exhausted'
     else state.iteration += 1
 
@@ -43,7 +49,8 @@ export function nextPrompt({ cwd, session, message }) {
     }
 
     if (state.status === 'active') {
-      return `Ralph pass ${state.iteration} of ${state.limit}. Resume run ${id} from .ralph/${id}.json. Follow the Ralph skill and verify the original acceptance criteria.\n\n${state.prompt}`
+      const reminder = promise ? `\nWhen verified, put <promise>${promise}</promise> on the line before the done marker.` : ''
+      return `Ralph pass ${state.iteration} of ${state.limit}. Resume run ${id} from .ralph/${id}.json. Follow the Ralph skill and verify the original acceptance criteria.${reminder}\n\n${state.prompt}`
     }
   } finally {
     rmdirSync(lock)

@@ -1,6 +1,6 @@
 # Ralph state
 
-Use the harness's working directory, even when the task concerns a different path. Generate a fresh 32-character lowercase hexadecimal ID with a local random generator. Store the state at `.ralph/<id>.json`. Write the file with owner-only permissions and keep it out of commits. Use a default limit of 8 passes unless the user provides another positive limit.
+Use the harness's working directory, even when the task concerns a different path. Generate a fresh 32-character lowercase hexadecimal ID with a local random generator. Store the state at `.ralph/<id>.json`. Write the file with owner-only permissions and keep it out of commits. Use a default limit of 8 passes. `--max-iterations` sets a positive safe integer. Save an optional `--completion-promise` in the `completionPromise` field as a nonempty single-line string without angle brackets. A resume may raise the iteration limit and preserves the original prompt and promise.
 
 ```json
 {
