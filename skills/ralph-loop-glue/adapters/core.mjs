@@ -27,17 +27,18 @@ export function nextPrompt({ cwd, session, message }) {
     const state = JSON.parse(readFileSync(file, 'utf8'))
     if (state?.status !== 'active' || (state.owner && state.owner !== session)) return
     if (!Number.isSafeInteger(state.iteration) || state.iteration !== Number(iteration)) return
-    if (!Number.isSafeInteger(state.limit) || state.limit < state.iteration) return
+    if (!Number.isSafeInteger(state.limit) || state.limit < 0) return
+    if (state.limit !== 0 && state.limit < state.iteration) return
     if (typeof state.prompt !== 'string' || !state.prompt.trim()) return
 
     const promise = state.completionPromise
     if (promise !== undefined && (typeof promise !== 'string' || !promise.trim() || /[<>\r\n]/.test(promise))) return
-    const completionAccepted = result === 'done' && (!promise || lines.at(-2) === `<promise>${promise}</promise>`)
+    const completionAccepted = result === 'done' && promise && lines.at(-2) === `<promise>${promise}</promise>`
 
     state.owner = session
     if (completionAccepted) state.status = 'done'
     else if (result === 'blocked') state.status = 'blocked'
-    else if (state.iteration === state.limit) state.status = 'exhausted'
+    else if (state.iteration === state.limit || state.iteration === Number.MAX_SAFE_INTEGER) state.status = 'exhausted'
     else state.iteration += 1
 
     const stage = file + '.' + randomUUID()
@@ -50,7 +51,7 @@ export function nextPrompt({ cwd, session, message }) {
 
     if (state.status === 'active') {
       const reminder = promise ? `\nWhen verified, put <promise>${promise}</promise> on the line before the done marker.` : ''
-      return `Ralph pass ${state.iteration} of ${state.limit}. Resume run ${id} from .ralph/${id}.json. Follow the Ralph skill and verify the original acceptance criteria.${reminder}\n\n${state.prompt}`
+      return `Ralph pass ${state.iteration} ${state.limit ? `of ${state.limit}` : '(unlimited)'}. Resume run ${id} from .ralph/${id}.json. Follow the Ralph skill and verify the original acceptance criteria.${reminder}\n\n${state.prompt}`
     }
   } finally {
     rmdirSync(lock)

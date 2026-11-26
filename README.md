@@ -9,7 +9,7 @@ Inspired by [Anthropic's Ralph Loop plugin](https://github.com/anthropics/claude
 Use [Skills CLI](https://github.com/vercel-labs/skills). Add `--global` to install for your user instead of the current project.
 
 ```sh
-npx skills add andrew-bierman/ralph-loop-glue --skill ralph-loop-glue -a claude-code codex opencode pi
+npx skills add andrew-bierman/ralph-loop-glue --skill ralph-loop-glue -a claude-code codex opencode pi gemini-cli
 ```
 
 Skills CLI installs the skill into the selected harnesses and carries the adapter files with it. **Configure automatic continuation once per harness.** Skills CLI manages skill files and links. It does not register Stop hooks or load plugin and extension files.
@@ -22,6 +22,7 @@ Skills CLI installs the skill into the selected harnesses and carries the adapte
 | Codex | `$ralph-loop-glue Fix the flaky checkout test` |
 | OpenCode 2 | `/ralph-loop-glue Fix the flaky checkout test` |
 | Pi | `/skill:ralph-loop-glue Fix the flaky checkout test` |
+| Gemini CLI | `/ralph-loop-glue Fix the flaky checkout test` |
 
 The `ralph-loop-glue` name keeps the command distinct from Anthropic's `/ralph-loop`.
 
@@ -31,8 +32,8 @@ Use the same options as Anthropic's plugin. For example, in Claude Code or OpenC
 /ralph-loop-glue "Fix the flaky checkout test" --max-iterations 5 --completion-promise "CHECKOUT TEST PASSES"
 ```
 
-- `--max-iterations <n>` limits the number of passes. This skill defaults to eight and requires a positive limit.
-- `--completion-promise "<phrase>"` requires an exact promise marker before the run is recorded as complete. The agent still needs to verify the requested criteria.
+- `--max-iterations <n>` limits the number of passes. Omit it or pass `0` for no Ralph-imposed cap. The harness may still enforce its own turn or hook limit.
+- `--completion-promise "<phrase>"` requires an exact promise marker before the run is recorded as complete. The agent still needs to verify the requested criteria. Without a promise, a loop continues until its limit, cancellation, or a blocker.
 - `--help` shows the options without starting a run.
 
 Each run stores its prompt and pass count in `.ralph/<run-id>.json` in the session's working directory. Use the same skill invocation with `resume <run-id>` or `cancel <run-id>`. Use the harness's interrupt control to stop an active turn immediately. Keep the state file private and out of commits.
@@ -72,6 +73,10 @@ export { default } from "SKILL_DIR/adapters/pi.mjs"
 
 Use a Pi version with the `agent_settled` extension event.
 
+### Gemini CLI
+
+Copy `SKILL_DIR/adapters/gemini-command.toml` to `~/.gemini/commands/ralph-loop-glue.toml`. Add the same hook entry shown for Claude to the `hooks.AfterAgent` array in `~/.gemini/settings.json`, using `gemini` as the final argument. Gemini may ask you to approve skill activation or enable the hook.
+
 ## Verification status
 
-Run `node --test` to exercise the state transitions and adapter contracts. Skills CLI installation has been tested for all four targets. Automatic continuation still needs live verification in each harness, including native Codex inside Omnigent.
+Run `node --test` to exercise the state transitions and adapter contracts. Skills CLI installation has been tested for Claude Code, Codex, OpenCode, Pi, and Gemini CLI. Automatic continuation still needs live verification in each harness, including native Codex inside Omnigent.
