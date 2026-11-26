@@ -1,10 +1,12 @@
-# Ralph Loop Glue
+# 🔁 Ralph Loop Glue
 
-Start a Ralph loop from the coding session you're already in. When a pass ends, the harness can replay the original task in the same session. The work stays on disk, so you can pick it up from another harness if needed.
+Give your coding agent another pass without typing “keep going.”
+
+When a pass ends, Ralph Loop Glue can replay the original task in the same session. The agent can inspect its previous edits, rerun checks, and improve the result. The task stays on disk, so you can pick it up from another harness.
 
 Inspired by [Anthropic's Ralph Loop plugin](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/ralph-loop).
 
-## Install the skill
+## 🧰 Install and set up
 
 Use [Skills CLI](https://github.com/vercel-labs/skills). Add `--global` to install for your user instead of the current project.
 
@@ -20,7 +22,7 @@ bun .agents/skills/ralph-loop-glue/adapters/setup.mjs
 
 For a global install, use `~/.agents/skills/ralph-loop-glue/adapters/setup.mjs`. The setup can also be run from the skill. For example, type `$ralph-loop-glue setup` in Codex or `/ralph-loop-glue setup` in Claude Code. It uses your existing user config directories. Append harness names such as `codex pi` to select specific targets or `--dry-run` to preview changes. Restart the affected harnesses afterward and approve any hook the harness prompts you to review.
 
-## Run a loop
+## 🚀 Start a loop
 
 | Harness | What to type after setup |
 | --- | --- |
@@ -32,7 +34,7 @@ For a global install, use `~/.agents/skills/ralph-loop-glue/adapters/setup.mjs`.
 
 The `ralph-loop-glue` name keeps the command distinct from Anthropic's `/ralph-loop`.
 
-Use the same options as Anthropic's plugin. For example, in Claude Code or OpenCode:
+Try a five-pass run with a clear finish line. The options match Anthropic’s plugin.
 
 ```text
 /ralph-loop-glue "Fix the flaky checkout test" --max-iterations 5 --completion-promise "CHECKOUT TEST PASSES"
@@ -42,9 +44,11 @@ Use the same options as Anthropic's plugin. For example, in Claude Code or OpenC
 - `--completion-promise "<phrase>"` requires an exact promise marker before the run is recorded as complete. The agent still needs to verify the requested criteria. Without a promise, a loop continues until its limit, cancellation, or a blocker.
 - `--help` shows the options without starting a run.
 
+### ⏸️ Interrupt, resume, or cancel
+
 Each run stores its prompt and pass count in `.ralph/<run-id>.json` in the session's working directory. Use the same skill invocation with `resume <run-id>` or `cancel <run-id>`. Use the harness's interrupt control to stop an active turn immediately. Keep the state file private and out of commits.
 
-## Manual setup
+## 🔌 Wire up hooks by hand
 
 Replace `SKILL_DIR` with the absolute path to the installed `ralph-loop-glue` directory. Restart the harness after changing its configuration. To try the skill before configuring the adapter, include “inline mode” in the task. It will run subsequent passes within the same turn.
 
@@ -83,6 +87,6 @@ Use a Pi version with the `agent_settled` extension event.
 
 Copy `SKILL_DIR/adapters/gemini-command.toml` to `~/.gemini/commands/ralph-loop-glue.toml`. Add the same hook entry shown for Claude to the `hooks.AfterAgent` array in `~/.gemini/settings.json`, using `gemini` as the final argument. Gemini may ask you to approve skill activation or enable the hook.
 
-## Verification status
+## 🧪 What’s been tested
 
 Run `bun test` or `node --test` to exercise the state transitions and adapter contracts. Skills CLI installation has been tested for Claude Code, Codex, OpenCode, Pi, and Gemini CLI. Automatic continuation still needs live verification in each harness, including native Codex inside Omnigent.
