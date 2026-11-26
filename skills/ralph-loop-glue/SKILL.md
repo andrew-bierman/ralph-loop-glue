@@ -8,6 +8,10 @@ license: MIT
 
 Keep working on the same prompt. At the end of a pass, the harness can feed that prompt back into the current session. Use the files, diffs, and check results from earlier passes to improve the work.
 
+## Setup
+
+On an explicit `setup` request, run `bun <absolute-skill-directory>/adapters/setup.mjs`. Pass the requested harness names or let it detect existing user config directories. Run with `--dry-run` when the user asks for a preview. Report what was configured. Restart the affected harnesses and approve hooks in the harness if prompted.
+
 ## Start
 
 Accept a task followed or preceded by `--max-iterations <n>` and `--completion-promise "<phrase>"`. A limit of zero means unlimited and is the default. If no completion promise is set, the loop continues until cancelled, capped, or blocked. Honor `--help` and `-h` before starting any work. Reject invalid options.
