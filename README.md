@@ -1,4 +1,4 @@
-# Ralph Loop for Agent Skills
+# Ralph Loop Glue
 
 Start a Ralph loop from the coding session you're already in. When a pass ends, the harness can replay the original task in the same session. The work stays on disk, so you can pick it up from another harness if needed.
 
@@ -6,10 +6,10 @@ Inspired by [Anthropic's Ralph Loop plugin](https://github.com/anthropics/claude
 
 ## Install the skill
 
-From a checkout, use [Skills CLI](https://github.com/vercel-labs/skills). Add `--global` to install for your user instead of the current project.
+Use [Skills CLI](https://github.com/vercel-labs/skills). Add `--global` to install for your user instead of the current project.
 
 ```sh
-npx skills add /absolute/path/to/ralph-skill --skill ralph-loop -a claude-code codex opencode pi
+npx skills add andrew-bierman/ralph-loop-glue --skill ralph-loop-glue -a claude-code codex opencode pi
 ```
 
 Skills CLI installs the skill into the selected harnesses and carries the adapter files with it. **Configure automatic continuation once per harness.** Skills CLI manages skill files and links. It does not register Stop hooks or load plugin and extension files.
@@ -18,17 +18,17 @@ Skills CLI installs the skill into the selected harnesses and carries the adapte
 
 | Harness | What to type after setup |
 | --- | --- |
-| Claude Code | `/ralph-loop Fix the flaky checkout test` |
-| Codex | `$ralph-loop Fix the flaky checkout test` |
-| OpenCode 2 | `/ralph-loop Fix the flaky checkout test` |
-| Pi | `/skill:ralph-loop Fix the flaky checkout test` |
+| Claude Code | `/ralph-loop-glue Fix the flaky checkout test` |
+| Codex | `$ralph-loop-glue Fix the flaky checkout test` |
+| OpenCode 2 | `/ralph-loop-glue Fix the flaky checkout test` |
+| Pi | `/skill:ralph-loop-glue Fix the flaky checkout test` |
 
-If Claude Code already offers a Ralph Loop command from Anthropic's plugin, disable that plugin for the session where you want to test this skill. Check the command picker to confirm which entry you loaded.
+The `ralph-loop-glue` name keeps the command distinct from Anthropic's `/ralph-loop`.
 
 Use the same options as Anthropic's plugin. For example, in Claude Code or OpenCode:
 
 ```text
-/ralph-loop "Fix the flaky checkout test" --max-iterations 5 --completion-promise "CHECKOUT TEST PASSES"
+/ralph-loop-glue "Fix the flaky checkout test" --max-iterations 5 --completion-promise "CHECKOUT TEST PASSES"
 ```
 
 - `--max-iterations <n>` limits the number of passes. This skill defaults to eight and requires a positive limit.
@@ -39,7 +39,7 @@ Each run stores its prompt and pass count in `.ralph/<run-id>.json` in the sessi
 
 ## Enable automatic continuation
 
-Replace `SKILL_DIR` with the absolute path to the installed `ralph-loop` directory. Restart the harness after changing its configuration. To try the skill before configuring the adapter, include “inline mode” in the task. It will run subsequent passes within the same turn.
+Replace `SKILL_DIR` with the absolute path to the installed `ralph-loop-glue` directory. Restart the harness after changing its configuration. To try the skill before configuring the adapter, include “inline mode” in the task. It will run subsequent passes within the same turn.
 
 ### Claude Code and Codex
 
@@ -60,11 +60,11 @@ Approve the hook in Codex if prompted. Both adapters require a Stop event with `
 
 ### OpenCode 2
 
-Add `SKILL_DIR/adapters/opencode` to the `plugins` array in `opencode.jsonc`. Copy `SKILL_DIR/adapters/opencode-command.md` to `~/.config/opencode/commands/ralph-loop.md`. The command loads the skill, and the plugin queues the next pass after a successful turn.
+Add `SKILL_DIR/adapters/opencode` to the `plugins` array in `opencode.jsonc`. Copy `SKILL_DIR/adapters/opencode-command.md` to `~/.config/opencode/commands/ralph-loop-glue.md`. The command loads the skill, and the plugin queues the next pass after a successful turn.
 
 ### Pi
 
-In `~/.pi/agent/extensions/ralph-loop.ts`:
+In `~/.pi/agent/extensions/ralph-loop-glue.ts`:
 
 ```ts
 export { default } from "SKILL_DIR/adapters/pi.mjs"

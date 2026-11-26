@@ -1,5 +1,5 @@
 {
-  "name": "ralph-opencode",
+  "name": "ralph-loop-glue-opencode",
   "version": "0.1.0",
   "type": "module",
   "exports": "./index.js"
