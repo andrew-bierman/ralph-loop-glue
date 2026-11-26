@@ -40,19 +40,24 @@ test('leaves unrelated and cancelled turns alone', (t) => {
   assert.equal(state().status, 'cancelled')
 })
 
-test('Claude and Codex Stop adapters replay and honor a completion marker', (t) => {
-  for (const harness of ['claude', 'codex']) {
-    const { cwd, state } = fixture(t)
+test('Claude, Codex, and Gemini hooks replay and honor a completion promise', (t) => {
+  for (const harness of ['claude', 'codex', 'gemini']) {
+    const { cwd, state } = fixture(t, { completionPromise: 'FIXED' })
+    const gemini = harness === 'gemini'
     const stop = (message) => spawnSync(process.execPath, [
       fileURLToPath(new URL('../skills/ralph-loop-glue/adapters/stop.mjs', import.meta.url)), harness,
     ], {
-      input: JSON.stringify({ cwd, session_id: 'one', hook_event_name: 'Stop', last_assistant_message: message }),
+      input: JSON.stringify({
+        cwd,
+        session_id: 'one',
+        ...(gemini ? { hook_event_name: 'AfterAgent', prompt_response: message } : { hook_event_name: 'Stop', last_assistant_message: message }),
+      }),
       encoding: 'utf8',
     })
     const replay = stop(mark(1))
     assert.equal(replay.status, 0)
-    assert.equal(JSON.parse(replay.stdout).decision, 'block')
-    assert.equal(stop(mark(2, 'done')).stdout, '')
+    assert.equal(JSON.parse(replay.stdout).decision, gemini ? 'deny' : 'block')
+    assert.equal(stop(`<promise>FIXED</promise>\n${mark(2, 'done')}`).stdout, '')
     assert.equal(state().status, 'done')
   }
 })
@@ -95,4 +100,14 @@ test('an exact optional completion promise is required before the done marker', 
   assert.equal(state().iteration, 2)
   assert.equal(pass(`<promise>TESTS PASS</promise>\n${mark(2, 'done')}`), undefined)
   assert.equal(state().status, 'done')
+})
+
+test('zero keeps replaying and a done marker without a promise does not stop the loop', (t) => {
+  const { cwd, state } = fixture(t, { limit: 0 })
+  const pass = message => nextPrompt({ cwd, session: 'codex:one', message })
+  assert.match(pass(mark(1)), /pass 2 \(unlimited\)/)
+  assert.match(pass(mark(2, 'done')), /pass 3 \(unlimited\)/)
+  assert.equal(state().status, 'active')
+  assert.equal(pass(mark(3, 'blocked')), undefined)
+  assert.equal(state().status, 'blocked')
 })

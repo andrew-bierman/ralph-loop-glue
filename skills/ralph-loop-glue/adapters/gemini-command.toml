@@ -1,0 +1,6 @@
+description = "Start, resume, or cancel a Ralph Loop Glue run"
+prompt = """
+Activate the ralph-loop-glue skill and follow it for this explicit Ralph request:
+
+{{args}}
+"""
