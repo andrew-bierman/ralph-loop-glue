@@ -12,7 +12,13 @@ Use [Skills CLI](https://github.com/vercel-labs/skills). Add `--global` to insta
 npx skills add andrew-bierman/ralph-loop-glue --skill ralph-loop-glue -a claude-code codex opencode pi gemini-cli
 ```
 
-Skills CLI installs the skill into the selected harnesses and carries the adapter files with it. **Configure automatic continuation once per harness.** Skills CLI manages skill files and links. It does not register Stop hooks or load plugin and extension files.
+Skills CLI installs the skill and its adapter files. Then run this once to configure the harnesses on your machine:
+
+```sh
+bun .agents/skills/ralph-loop-glue/adapters/setup.mjs
+```
+
+For a global install, use `~/.agents/skills/ralph-loop-glue/adapters/setup.mjs`. The setup can also be run from the skill. For example, type `$ralph-loop-glue setup` in Codex or `/ralph-loop-glue setup` in Claude Code. It uses your existing user config directories. Append harness names such as `codex pi` to select specific targets or `--dry-run` to preview changes. Restart the affected harnesses afterward and approve any hook the harness prompts you to review.
 
 ## Run a loop
 
@@ -38,7 +44,7 @@ Use the same options as Anthropic's plugin. For example, in Claude Code or OpenC
 
 Each run stores its prompt and pass count in `.ralph/<run-id>.json` in the session's working directory. Use the same skill invocation with `resume <run-id>` or `cancel <run-id>`. Use the harness's interrupt control to stop an active turn immediately. Keep the state file private and out of commits.
 
-## Enable automatic continuation
+## Manual setup
 
 Replace `SKILL_DIR` with the absolute path to the installed `ralph-loop-glue` directory. Restart the harness after changing its configuration. To try the skill before configuring the adapter, include “inline mode” in the task. It will run subsequent passes within the same turn.
 
